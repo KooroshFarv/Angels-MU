@@ -2,6 +2,8 @@ import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { UserProfile } from '../types/UserProfile';
+import ProductShelf from './ProductShelf';
+import { Product } from '../types/Product';
 
 interface Props{
     profile: UserProfile
@@ -10,6 +12,7 @@ interface Props{
 export default function CameraScreen({profile}: Props) {
   const [facing, setFacing] = useState<CameraType>('front');
   const [permission, requestPermission] = useCameraPermissions();
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
 
   if (!permission) {
     return <View />;
@@ -37,6 +40,11 @@ export default function CameraScreen({profile}: Props) {
             <Text style={styles.buttonText}>Flip</Text>
           </TouchableOpacity>
         </View>
+        <ProductShelf
+        profile={profile}
+        selectedProduct={selectedProduct}
+        onSelectProduct={setSelectedProduct}
+/>
       </CameraView>
     </View>
   );
@@ -50,12 +58,12 @@ const styles = StyleSheet.create({
   camera: {
     flex: 1,
   },
-  controls: {
-    position: 'absolute',
-    bottom: 40,
-    width: '100%',
-    alignItems: 'center',
-  },
+controls: {
+  position: 'absolute',
+  bottom: 220,
+  width: '100%',
+  alignItems: 'center',
+},
   flipButton: {
     backgroundColor: 'rgba(0,0,0,0.5)',
     paddingHorizontal: 24,
