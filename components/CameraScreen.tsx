@@ -4,6 +4,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { UserProfile } from '../types/UserProfile';
 import ProductShelf from './ProductShelf';
 import { Product } from '../types/Product';
+import ProductCard from './ProductCards';
 
 interface Props{
     profile: UserProfile
@@ -13,6 +14,8 @@ export default function CameraScreen({profile}: Props) {
   const [facing, setFacing] = useState<CameraType>('front');
   const [permission, requestPermission] = useCameraPermissions();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [cardProduct, setCardProduct] = useState<Product | null>(null);
+  const [tryOnProduct, setTryOnProduct] = useState<Product | null>(null);
 
   if (!permission) {
     return <View />;
@@ -42,10 +45,21 @@ export default function CameraScreen({profile}: Props) {
         </View>
         <ProductShelf
         profile={profile}
-        selectedProduct={selectedProduct}
-        onSelectProduct={setSelectedProduct}
+        selectedProduct={tryOnProduct}
+        onSelectProduct={(p) => setCardProduct(p)}
 />
       </CameraView>
+      {cardProduct && (
+  <ProductCard
+    product={cardProduct}
+    profile={profile}
+    onClose={() => setCardProduct(null)}
+    onTryOn={(p) => {
+      setTryOnProduct(p);
+      setCardProduct(null);
+    }}
+  />
+)}
     </View>
   );
 }
