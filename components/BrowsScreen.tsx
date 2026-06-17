@@ -12,16 +12,19 @@ import { Product } from '../types/Product';
 import { UserProfile } from '../types/UserProfile';
 import ProductCard from './ProductCards';
 import { theme } from '../constants/theme';
+import ProfileScreen from './ProfileScreen';
 
 interface Props {
   profile: UserProfile;
   onTryOn: (product: Product) => void;
+  onUpdate: (profile: UserProfile) => void;
 }
 
-export default function BrowseScreen({ profile, onTryOn }: Props) {
+export default function BrowseScreen({ profile, onTryOn, onUpdate }: Props) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [activeCategory, setActiveCategory] = useState('all');
   const [activeBrand, setActiveBrand] = useState('all');
+  const [showProfile, setShowProfile] = useState(false);
 
   const categories = ['all', 'lips', 'eyes', 'face'];
 
@@ -37,8 +40,16 @@ export default function BrowseScreen({ profile, onTryOn }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.logo}>mirrors</Text>
-        <Text style={styles.subtitle}>Find your shade</Text>
+        <View>
+          <Text style={styles.logo}>mirrors</Text>
+          <Text style={styles.subtitle}>Find your shade</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.profileBtn}
+          onPress={() => setShowProfile(true)}
+        >
+          <Text style={styles.profileBtnText}>Profile</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -165,6 +176,17 @@ export default function BrowseScreen({ profile, onTryOn }: Props) {
           }}
         />
       )}
+
+      {showProfile && (
+        <ProfileScreen
+          profile={profile}
+          onUpdate={(p) => {
+            onUpdate(p);
+            setShowProfile(false);
+          }}
+          onClose={() => setShowProfile(false)}
+        />
+      )}
     </View>
   );
 }
@@ -174,13 +196,41 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#050505',
   },
-header: {
-  paddingTop: 60,
-  paddingHorizontal: 20,
-  paddingBottom: 16,
-  borderBottomWidth: 0.5,
-  borderBottomColor: 'rgba(255,255,255,0.05)',
-},
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
+  logo: {
+    color: theme.gold,
+    fontSize: 34,
+    letterSpacing: -1,
+    fontFamily: theme.fonts.heading,
+  },
+  subtitle: {
+    color: theme.gray2,
+    fontSize: 13,
+    marginTop: 2,
+    fontFamily: theme.fonts.body,
+  },
+  profileBtn: {
+    backgroundColor: 'rgba(201,168,76,0.1)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,168,76,0.3)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  profileBtnText: {
+    color: theme.gold,
+    fontSize: 13,
+    fontFamily: theme.fonts.bodySemiBold,
+  },
   filterScroll: {
     maxHeight: 44,
     marginBottom: 12,
@@ -205,7 +255,7 @@ header: {
   filterText: {
     color: theme.gray1,
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: theme.fonts.body,
   },
   filterTextActive: {
     color: theme.gold,
@@ -222,17 +272,42 @@ header: {
   listContent: {
     paddingHorizontal: 16,
     gap: 12,
+    paddingTop: 12,
+  },
+  card: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 20,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.12)',
+    overflow: 'hidden',
+  },
+  cardGold: {
+    borderColor: 'rgba(201,168,76,0.45)',
+    borderWidth: 0.5,
+  },
+  cardInner: {
+    flexDirection: 'row',
+    padding: 14,
+    gap: 14,
+    backgroundColor: 'rgba(255,255,255,0.02)',
   },
   imageBox: {
     width: 90,
     height: 90,
     borderRadius: 14,
     overflow: 'hidden',
-    position: 'relative',
   },
   productImage: {
     width: 90,
     height: 90,
+  },
+  colorFallback: {
+    width: 90,
+    height: 90,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 8,
+    borderRadius: 14,
   },
   fallbackLabel: {
     color: 'rgba(255,255,255,0.7)',
@@ -261,21 +336,69 @@ header: {
   toneText: {
     color: theme.green,
     fontSize: 10,
-    fontWeight: '600',
+    fontFamily: theme.fonts.bodySemiBold,
   },
   info: {
     flex: 1,
     justifyContent: 'space-between',
   },
+  productName: {
+    color: theme.white,
+    fontSize: 17,
+    marginBottom: 3,
+    fontFamily: theme.fonts.heading,
+  },
+  brandName: {
+    color: theme.gray1,
+    fontSize: 13,
+    fontFamily: theme.fonts.body,
+  },
   shadeName: {
     color: theme.gray2,
     fontSize: 12,
     marginTop: 2,
+    fontFamily: theme.fonts.body,
+  },
+  price: {
+    color: theme.gold,
+    fontSize: 20,
+    fontFamily: theme.fonts.heading,
+  },
+  cardActions: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    paddingTop: 10,
+    borderTopWidth: 0.5,
+    borderTopColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(0,0,0,0.15)',
+  },
+  tryOnBtn: {
+    flex: 1,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,168,76,0.6)',
+    backgroundColor: 'rgba(201,168,76,0.07)',
   },
   tryOnText: {
     color: theme.gold,
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: theme.fonts.bodySemiBold,
+  },
+  buyBtn: {
+    flex: 2,
+    backgroundColor: 'rgba(61,181,106,0.1)',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 0.5,
+    borderColor: 'rgba(61,181,106,0.4)',
   },
   buyDot: {
     width: 7,
@@ -283,103 +406,16 @@ header: {
     borderRadius: 4,
     backgroundColor: theme.green,
   },
+  buyText: {
+    color: theme.green,
+    fontSize: 14,
+    fontFamily: theme.fonts.bodySemiBold,
+  },
   emptyText: {
     color: theme.gray2,
     fontSize: 15,
     textAlign: 'center',
     marginTop: 40,
+    fontFamily: theme.fonts.body,
   },
-  logo: {
-  color: theme.gold,
-  fontSize: 34,
-  fontWeight: '700',
-  letterSpacing: -1,
-  fontFamily: theme.fonts.heading,
-},
-subtitle: {
-  color: theme.gray2,
-  fontSize: 13,
-  marginTop: 2,
-  fontFamily: theme.fonts.body,
-},
-productName: {
-  color: theme.white,
-  fontSize: 17,
-  fontWeight: '700',
-  marginBottom: 3,
-  fontFamily: theme.fonts.heading,
-},
-brandName: {
-  color: theme.gray1,
-  fontSize: 13,
-  fontFamily: theme.fonts.body,
-},
-price: {
-  color: theme.gold,
-  fontSize: 20,
-  fontWeight: '700',
-  fontFamily: theme.fonts.heading,
-},
-buyText: {
-  color: theme.green,
-  fontSize: 14,
-  fontWeight: '700',
-  fontFamily: theme.fonts.bodySemiBold,
-},
-card: {
-  backgroundColor: 'rgba(255,255,255,0.06)',
-  borderRadius: 20,
-  borderWidth: 0.5,
-  borderColor: 'rgba(255,255,255,0.12)',
-  overflow: 'hidden',
-},
-cardGold: {
-  borderColor: 'rgba(201,168,76,0.45)',
-  borderWidth: 0.5,
-},
-colorFallback: {
-  width: 90,
-  height: 90,
-  alignItems: 'center',
-  justifyContent: 'flex-end',
-  paddingBottom: 8,
-  borderRadius: 14,
-},
-cardInner: {
-  flexDirection: 'row',
-  padding: 14,
-  gap: 14,
-  backgroundColor: 'rgba(255,255,255,0.02)',
-},
-cardActions: {
-  flexDirection: 'row',
-  gap: 8,
-  paddingHorizontal: 14,
-  paddingBottom: 14,
-  backgroundColor: 'rgba(0,0,0,0.15)',
-  paddingTop: 10,
-  borderTopWidth: 0.5,
-  borderTopColor: 'rgba(255,255,255,0.06)',
-},
-tryOnBtn: {
-  flex: 1,
-  borderRadius: 12,
-  paddingVertical: 12,
-  alignItems: 'center',
-  borderWidth: 0.5,
-  borderColor: 'rgba(201,168,76,0.6)',
-  backgroundColor: 'rgba(201,168,76,0.07)',
-},
-buyBtn: {
-  flex: 2,
-  backgroundColor: 'rgba(61,181,106,0.1)',
-  borderRadius: 12,
-  paddingVertical: 12,
-  alignItems: 'center',
-  flexDirection: 'row',
-  justifyContent: 'center',
-  gap: 6,
-  borderWidth: 0.5,
-  borderColor: 'rgba(61,181,106,0.4)',
-},
 });

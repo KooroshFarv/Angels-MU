@@ -44,8 +44,9 @@ useEffect(() => {
         />
       ) : (
         <BrowseScreen
-          profile={profile}
-          onTryOn={(p) => setTryOnProduct(p)}
+        profile={profile}
+        onTryOn={(p) => setTryOnProduct(p)}
+        onUpdate={(p) => setProfile(p)}
         />
       )}
     </View>
