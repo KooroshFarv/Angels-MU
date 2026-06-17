@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Review } from '../types/Product';
 import { UserProfile } from '../types/UserProfile';
@@ -36,16 +36,15 @@ export default function ReviewSheet({ productId, profile, onClose }: Props) {
   const [filterTone, setFilterTone] = useState<string | 'all'>('all');
   const [loaded, setLoaded] = useState(false);
 
-  const loadReviews = async () => {
-    const data = await AsyncStorage.getItem(`reviews_${productId}`);
+    useEffect(() => {
+  AsyncStorage.getItem(`reviews_${productId}`).then(data => {
     if (data) setReviews(JSON.parse(data));
     setLoaded(true);
-  };
+  });
+}, [productId]);
 
-  if (!loaded) {
-    loadReviews();
-    return null;
-  }
+if (!loaded) return null;
+
 
   const saveReview = async () => {
     if (!text.trim()) return;

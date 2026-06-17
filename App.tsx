@@ -22,12 +22,12 @@ export default function App() {
     Lora_600SemiBold,
   });
 
-  useEffect(() => {
-    AsyncStorage.getItem('userProfile').then(data => {
-      if (data) setProfile(JSON.parse(data));
-      setLoading(false);
-    });
-  }, []);
+useEffect(() => {
+  AsyncStorage.getItem('userProfile').then(data => {
+    if (data) setProfile(JSON.parse(data));
+    setLoading(false);
+  });
+}, []);
 
   if (!fontsLoaded || loading) return <View style={styles.container} />;
 

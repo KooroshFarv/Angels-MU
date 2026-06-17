@@ -122,7 +122,7 @@ export default function ProductCard({ product, profile, onClose, onTryOn }: Prop
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.75)',
   },
   card: {
     backgroundColor: 'rgba(18,18,18,0.97)',

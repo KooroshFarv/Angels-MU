@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import {
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  ScrollView,
 } from 'react-native';
 import { SkinTone, Undertone, ShopCategory, UserProfile } from '../types/UserProfile';
+import { theme } from '../constants/theme';
 
 const SKIN_TONES: { value: SkinTone; hex: string; label: string }[] = [
   { value: 'fair', hex: '#F8E8D8', label: 'Fair' },
@@ -30,7 +31,10 @@ const CATEGORIES: { value: ShopCategory; label: string; emoji: string }[] = [
   { value: 'all', label: 'Everything', emoji: '🛍️' },
 ];
 
-const BRAND_OPTIONS = ['MAC', 'Fenty Beauty', 'NARS', 'Charlotte Tilbury', 'Maybelline', 'Dior', 'YSL', 'Rare Beauty', 'e.l.f.', 'NYX'];
+const BRAND_OPTIONS = [
+  'MAC', 'Fenty Beauty', 'NARS', 'Charlotte Tilbury',
+  'Maybelline', 'Dior', 'YSL', 'Rare Beauty', 'e.l.f.', 'NYX',
+];
 
 interface Props {
   onComplete: (profile: UserProfile) => void;
@@ -43,17 +47,15 @@ export default function Onboarding({ onComplete }: Props) {
   const [categories, setCategories] = useState<ShopCategory[]>([]);
   const [brands, setBrands] = useState<string[]>([]);
 
-  const toggleCategory = (cat: ShopCategory) => {
+  const toggleCategory = (cat: ShopCategory) =>
     setCategories(prev =>
       prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
     );
-  };
 
-  const toggleBrand = (brand: string) => {
+  const toggleBrand = (brand: string) =>
     setBrands(prev =>
       prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]
     );
-  };
 
   const canProceed = () => {
     if (step === 0) return skinTone !== null;
@@ -76,121 +78,160 @@ export default function Onboarding({ onComplete }: Props) {
     }
   };
 
-  const steps = [
-    // Step 0 - Skin tone
-    <View key="step0" style={styles.stepContainer}>
-      <Text style={styles.stepLabel}>Step 1 of 4</Text>
-      <Text style={styles.title}>What's your skin tone?</Text>
-      <Text style={styles.subtitle}>This helps us show the most accurate colors on you</Text>
-      <View style={styles.toneGrid}>
-        {SKIN_TONES.map(tone => (
-          <TouchableOpacity
-            key={tone.value}
-            style={styles.toneOption}
-            onPress={() => setSkinTone(tone.value)}
-          >
-            <View style={[
-              styles.toneCircle,
-              { backgroundColor: tone.hex },
-              skinTone === tone.value && styles.toneSelected,
-            ]} />
-            <Text style={[styles.toneLabel, skinTone === tone.value && styles.toneLabelSelected]}>
-              {tone.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>,
-
-    // Step 1 - Undertone
-    <View key="step1" style={styles.stepContainer}>
-      <Text style={styles.stepLabel}>Step 2 of 4</Text>
-      <Text style={styles.title}>What's your undertone?</Text>
-      <Text style={styles.subtitle}>Look at your wrist veins — green means warm, blue means cool</Text>
-      <View style={styles.undertoneList}>
-        {UNDERTONES.map(u => (
-          <TouchableOpacity
-            key={u.value}
-            style={[styles.undertoneCard, undertone === u.value && styles.undertoneSelected]}
-            onPress={() => setUndertone(u.value)}
-          >
-            <Text style={[styles.undertoneLabel, undertone === u.value && styles.undertoneLabelSelected]}>
-              {u.label}
-            </Text>
-            <Text style={[styles.undertoneDesc, undertone === u.value && styles.undertoneLabelSelected]}>
-              {u.description}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>,
-
-    // Step 2 - Categories
-    <View key="step2" style={styles.stepContainer}>
-      <Text style={styles.stepLabel}>Step 3 of 4</Text>
-      <Text style={styles.title}>What do you shop for?</Text>
-      <Text style={styles.subtitle}>Select all that apply</Text>
-      <View style={styles.categoryGrid}>
-        {CATEGORIES.map(cat => (
-          <TouchableOpacity
-            key={cat.value}
-            style={[styles.categoryCard, categories.includes(cat.value) && styles.categorySelected]}
-            onPress={() => toggleCategory(cat.value)}
-          >
-            <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
-            <Text style={[styles.categoryLabel, categories.includes(cat.value) && styles.categoryLabelSelected]}>
-              {cat.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>,
-
-    // Step 3 - Brands
-    <View key="step3" style={styles.stepContainer}>
-      <Text style={styles.stepLabel}>Step 4 of 4</Text>
-      <Text style={styles.title}>Any favorite brands?</Text>
-      <Text style={styles.subtitle}>We'll show these first. Skip if you're open to everything.</Text>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.brandGrid}>
-          {BRAND_OPTIONS.map(brand => (
-            <TouchableOpacity
-              key={brand}
-              style={[styles.brandPill, brands.includes(brand) && styles.brandPillSelected]}
-              onPress={() => toggleBrand(brand)}
-            >
-              <Text style={[styles.brandLabel, brands.includes(brand) && styles.brandLabelSelected]}>
-                {brand}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
-    </View>,
-  ];
-
   return (
-    <View  style={styles.container}>
-      <View style={styles.progressBar}>
+    <View style={styles.container}>
+
+      <View style={styles.topSection}>
+        <Text style={styles.logo}>mirrors</Text>
+        <Text style={styles.logoSub}>your beauty, your shade</Text>
+      </View>
+
+      <View style={styles.progressRow}>
         {[0, 1, 2, 3].map(i => (
-          <View key={i} style={[styles.progressDot, i <= step && styles.progressDotActive]} />
+          <View
+            key={i}
+            style={[
+              styles.progressBar,
+              i <= step && styles.progressBarActive,
+              i < step && styles.progressBarDone,
+            ]}
+          />
         ))}
       </View>
 
-      {steps[step]}
+      <View style={styles.card}>
+        <Text style={styles.stepLabel}>Step {step + 1} of 4</Text>
+
+        {step === 0 && (
+          <View style={styles.stepContent}>
+            <Text style={styles.stepTitle}>What's your{'\n'}skin tone?</Text>
+            <Text style={styles.stepSubtitle}>We'll show the most accurate colors on you</Text>
+            <View style={styles.toneGrid}>
+              {SKIN_TONES.map(tone => (
+                <TouchableOpacity
+                  key={tone.value}
+                  style={styles.toneOption}
+                  onPress={() => setSkinTone(tone.value)}
+                >
+                  <View style={[
+                    styles.toneCircle,
+                    { backgroundColor: tone.hex },
+                    skinTone === tone.value && styles.toneCircleSelected,
+                  ]} />
+                  <Text style={[
+                    styles.toneLabel,
+                    skinTone === tone.value && styles.toneLabelSelected,
+                  ]}>
+                    {tone.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {step === 1 && (
+          <View style={styles.stepContent}>
+            <Text style={styles.stepTitle}>What's your{'\n'}undertone?</Text>
+            <Text style={styles.stepSubtitle}>Look at your wrist veins — green means warm, blue means cool</Text>
+            <View style={styles.undertoneList}>
+              {UNDERTONES.map(u => (
+                <TouchableOpacity
+                  key={u.value}
+                  style={[
+                    styles.undertoneCard,
+                    undertone === u.value && styles.undertoneCardSelected,
+                  ]}
+                  onPress={() => setUndertone(u.value)}
+                >
+                  <Text style={[
+                    styles.undertoneLabel,
+                    undertone === u.value && styles.undertoneLabelSelected,
+                  ]}>
+                    {u.label}
+                  </Text>
+                  <Text style={[
+                    styles.undertoneDesc,
+                    undertone === u.value && styles.undertoneDescSelected,
+                  ]}>
+                    {u.description}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {step === 2 && (
+          <View style={styles.stepContent}>
+            <Text style={styles.stepTitle}>What do you{'\n'}shop for?</Text>
+            <Text style={styles.stepSubtitle}>Select all that apply</Text>
+            <View style={styles.categoryGrid}>
+              {CATEGORIES.map(cat => (
+                <TouchableOpacity
+                  key={cat.value}
+                  style={[
+                    styles.categoryCard,
+                    categories.includes(cat.value) && styles.categoryCardSelected,
+                  ]}
+                  onPress={() => toggleCategory(cat.value)}
+                >
+                  <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+                  <Text style={[
+                    styles.categoryLabel,
+                    categories.includes(cat.value) && styles.categoryLabelSelected,
+                  ]}>
+                    {cat.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {step === 3 && (
+          <View style={styles.stepContent}>
+            <Text style={styles.stepTitle}>Favourite{'\n'}brands?</Text>
+            <Text style={styles.stepSubtitle}>We'll show these first. Skip if you're open to everything.</Text>
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.brandScroll}>
+              <View style={styles.brandGrid}>
+                {BRAND_OPTIONS.map(brand => (
+                  <TouchableOpacity
+                    key={brand}
+                    style={[
+                      styles.brandPill,
+                      brands.includes(brand) && styles.brandPillSelected,
+                    ]}
+                    onPress={() => toggleBrand(brand)}
+                  >
+                    <Text style={[
+                      styles.brandLabel,
+                      brands.includes(brand) && styles.brandLabelSelected,
+                    ]}>
+                      {brand}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+        )}
+      </View>
 
       <View style={styles.footer}>
         {step > 0 && (
-          <TouchableOpacity style={styles.backButton} onPress={() => setStep(s => s - 1)}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => setStep(s => s - 1)}>
             <Text style={styles.backText}>Back</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity
-          style={[styles.nextButton, !canProceed() && styles.nextButtonDisabled]}
+          style={[styles.nextBtn, !canProceed() && styles.nextBtnDisabled]}
           onPress={handleNext}
           disabled={!canProceed()}
         >
-          <Text style={styles.nextText}>{step === 3 ? 'Start exploring' : 'Next'}</Text>
+          <Text style={styles.nextText}>
+            {step === 3 ? 'Start exploring' : 'Next'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -200,50 +241,80 @@ export default function Onboarding({ onComplete }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
-    paddingTop: 60,
-    paddingHorizontal: 24,
+    backgroundColor: theme.bg,
+    paddingHorizontal: 20,
+    paddingTop: 64,
+  },
+  topSection: {
+    marginBottom: 32,
+  },
+  logo: {
+    color: theme.gold,
+    fontSize: 38,
+    fontFamily: theme.fonts.heading,
+    letterSpacing: -1,
+  },
+  logoSub: {
+    color: theme.gray2,
+    fontSize: 13,
+    fontFamily: theme.fonts.body,
+    marginTop: 4,
+    letterSpacing: 0.5,
+  },
+  progressRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 28,
   },
   progressBar: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 40,
-  },
-  progressDot: {
     flex: 1,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: '#333',
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
-  progressDotActive: {
-    backgroundColor: '#E8453C',
-  },
-  stepContainer: {
+    progressBarActive: {
+    backgroundColor: theme.gold,
+    },
+    progressBarDone: {
+    backgroundColor: theme.gold,
+    },
+  card: {
     flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 24,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.08)',
+    padding: 24,
   },
   stepLabel: {
-    color: '#666',
-    fontSize: 13,
-    marginBottom: 12,
-    letterSpacing: 1,
+    color: theme.gray2,
+    fontSize: 11,
+    fontFamily: theme.fonts.body,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
+    marginBottom: 12,
   },
-  title: {
-    color: '#fff',
-    fontSize: 28,
-    fontWeight: '700',
+  stepContent: {
+    flex: 1,
+  },
+  stepTitle: {
+    color: theme.white,
+    fontSize: 32,
+    fontFamily: theme.fonts.heading,
+    lineHeight: 40,
     marginBottom: 8,
   },
-  subtitle: {
-    color: '#888',
-    fontSize: 15,
-    marginBottom: 32,
-    lineHeight: 22,
+  stepSubtitle: {
+    color: theme.gray1,
+    fontSize: 14,
+    fontFamily: theme.fonts.body,
+    lineHeight: 21,
+    marginBottom: 28,
   },
   toneGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 16,
+    gap: 20,
     justifyContent: 'center',
   },
   toneOption: {
@@ -251,79 +322,87 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   toneCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    borderWidth: 3,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    borderWidth: 2,
     borderColor: 'transparent',
   },
-  toneSelected: {
-    borderColor: '#E8453C',
-    transform: [{ scale: 1.1 }],
+  toneCircleSelected: {
+    borderColor: theme.gold,
+    transform: [{ scale: 1.08 }],
   },
   toneLabel: {
-    color: '#666',
-    fontSize: 13,
+    color: theme.gray2,
+    fontSize: 12,
+    fontFamily: theme.fonts.body,
   },
   toneLabelSelected: {
-    color: '#fff',
+    color: theme.gold,
   },
   undertoneList: {
-    gap: 12,
+    gap: 10,
   },
   undertoneCard: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'rgba(255,255,255,0.04)',
     borderRadius: 16,
-    padding: 20,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
+    padding: 18,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
-  undertoneSelected: {
-    borderColor: '#E8453C',
-    backgroundColor: '#1F0F0F',
+  undertoneCardSelected: {
+    borderColor: 'rgba(201,168,76,0.5)',
+    backgroundColor: 'rgba(201,168,76,0.06)',
   },
   undertoneLabel: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 4,
+    color: theme.white,
+    fontSize: 17,
+    fontFamily: theme.fonts.heading,
+    marginBottom: 3,
   },
   undertoneLabelSelected: {
-    color: '#E8453C',
+    color: theme.gold,
   },
   undertoneDesc: {
-    color: '#666',
-    fontSize: 14,
+    color: theme.gray2,
+    fontSize: 13,
+    fontFamily: theme.fonts.body,
+  },
+  undertoneDescSelected: {
+    color: theme.gray1,
   },
   categoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 10,
   },
   categoryCard: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'rgba(255,255,255,0.04)',
     borderRadius: 16,
-    padding: 20,
+    padding: 18,
     alignItems: 'center',
     width: '47%',
-    borderWidth: 1.5,
-    borderColor: 'transparent',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
-  categorySelected: {
-    borderColor: '#E8453C',
-    backgroundColor: '#1F0F0F',
+  categoryCardSelected: {
+    borderColor: 'rgba(201,168,76,0.5)',
+    backgroundColor: 'rgba(201,168,76,0.06)',
   },
   categoryEmoji: {
-    fontSize: 32,
+    fontSize: 30,
     marginBottom: 8,
   },
   categoryLabel: {
-    color: '#888',
-    fontSize: 15,
-    fontWeight: '600',
+    color: theme.gray1,
+    fontSize: 14,
+    fontFamily: theme.fonts.bodySemiBold,
   },
   categoryLabelSelected: {
-    color: '#fff',
+    color: theme.gold,
+  },
+  brandScroll: {
+    flex: 1,
   },
   brandGrid: {
     flexDirection: 'row',
@@ -332,55 +411,59 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   brandPill: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'rgba(255,255,255,0.04)',
     borderRadius: 24,
     paddingHorizontal: 18,
     paddingVertical: 10,
-    borderWidth: 1.5,
-    borderColor: '#333',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   brandPillSelected: {
-    borderColor: '#E8453C',
-    backgroundColor: '#1F0F0F',
+    borderColor: 'rgba(201,168,76,0.5)',
+    backgroundColor: 'rgba(201,168,76,0.06)',
   },
   brandLabel: {
-    color: '#888',
+    color: theme.gray1,
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: theme.fonts.body,
   },
   brandLabelSelected: {
-    color: '#fff',
+    color: theme.gold,
   },
   footer: {
     flexDirection: 'row',
-    gap: 12,
-    paddingVertical: 32,
+    gap: 10,
+    paddingVertical: 24,
   },
-  backButton: {
+  backBtn: {
     flex: 1,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'rgba(255,255,255,0.04)',
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   backText: {
-    color: '#888',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.gray1,
+    fontSize: 15,
+    fontFamily: theme.fonts.body,
   },
-  nextButton: {
+  nextBtn: {
     flex: 2,
-    backgroundColor: '#E8453C',
+    backgroundColor: 'rgba(201,168,76,0.12)',
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,168,76,0.4)',
   },
-  nextButtonDisabled: {
-    opacity: 0.4,
+  nextBtnDisabled: {
+    opacity: 0.35,
   },
   nextText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
+    color: theme.gold,
+    fontSize: 15,
+    fontFamily: theme.fonts.bodySemiBold,
   },
 });
