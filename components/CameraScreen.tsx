@@ -1,8 +1,13 @@
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { UserProfile } from '../types/UserProfile';
 
-export default function CameraScreen() {
+interface Props{
+    profile: UserProfile
+}
+
+export default function CameraScreen({profile}: Props) {
   const [facing, setFacing] = useState<CameraType>('front');
   const [permission, requestPermission] = useCameraPermissions();
 
