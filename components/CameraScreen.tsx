@@ -6,16 +6,17 @@ import ProductShelf from './ProductShelf';
 import { Product } from '../types/Product';
 import ProductCard from './ProductCards';
 
-interface Props{
-    profile: UserProfile
+interface Props {
+  profile: UserProfile;
+  tryOnProduct: Product;
+  onExit: () => void;
 }
 
-export default function CameraScreen({profile}: Props) {
+export default function CameraScreen({ profile, tryOnProduct, onExit }: Props) {
   const [facing, setFacing] = useState<CameraType>('front');
   const [permission, requestPermission] = useCameraPermissions();
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [cardProduct, setCardProduct] = useState<Product | null>(null);
-  const [tryOnProduct, setTryOnProduct] = useState<Product | null>(null);
+  const [activeTryOn, setActiveTryOn] = useState<Product>(tryOnProduct);
 
   if (!permission) {
     return <View />;
@@ -35,6 +36,10 @@ export default function CameraScreen({profile}: Props) {
   return (
     <View style={styles.container}>
       <CameraView style={styles.camera} facing={facing}>
+        <TouchableOpacity style={styles.exitButton} onPress={onExit}>
+          <Text style={styles.exitText}>✕</Text>
+        </TouchableOpacity>
+
         <View style={styles.controls}>
           <TouchableOpacity
             style={styles.flipButton}
@@ -43,23 +48,31 @@ export default function CameraScreen({profile}: Props) {
             <Text style={styles.buttonText}>Flip</Text>
           </TouchableOpacity>
         </View>
+
         <ProductShelf
-        profile={profile}
-        selectedProduct={tryOnProduct}
-        onSelectProduct={(p) => setCardProduct(p)}
-/>
+          profile={profile}
+          selectedProduct={activeTryOn}
+          onSelectProduct={(p) => {
+            if (p) {
+              setActiveTryOn(p);
+            } else {
+              setCardProduct(null);
+            }
+          }}
+        />
       </CameraView>
+
       {cardProduct && (
-  <ProductCard
-    product={cardProduct}
-    profile={profile}
-    onClose={() => setCardProduct(null)}
-    onTryOn={(p) => {
-      setTryOnProduct(p);
-      setCardProduct(null);
-    }}
-  />
-)}
+        <ProductCard
+          product={cardProduct}
+          profile={profile}
+          onClose={() => setCardProduct(null)}
+          onTryOn={(p) => {
+            setActiveTryOn(p);
+            setCardProduct(null);
+          }}
+        />
+      )}
     </View>
   );
 }
@@ -72,12 +85,27 @@ const styles = StyleSheet.create({
   camera: {
     flex: 1,
   },
-controls: {
-  position: 'absolute',
-  bottom: 220,
-  width: '100%',
-  alignItems: 'center',
-},
+  exitButton: {
+    position: 'absolute',
+    top: 56,
+    left: 20,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  exitText: {
+    color: '#fff',
+    fontSize: 18,
+  },
+  controls: {
+    position: 'absolute',
+    bottom: 220,
+    width: '100%',
+    alignItems: 'center',
+  },
   flipButton: {
     backgroundColor: 'rgba(0,0,0,0.5)',
     paddingHorizontal: 24,
