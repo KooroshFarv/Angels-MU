@@ -7,8 +7,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useState } from 'react';
 import { Product } from '../types/Product';
 import { UserProfile } from '../types/UserProfile';
+import { theme } from '../constants/theme';
+import ReviewSheet from './ReviewSheet';
 
 interface Props {
   product: Product;
@@ -18,6 +21,7 @@ interface Props {
 }
 
 export default function ProductCard({ product, profile, onClose, onTryOn }: Props) {
+  const [showReviews, setShowReviews] = useState(false);
   const compatible = product.compatibleSkinTones.includes(profile.skinTone);
 
   const handleBuy = () => {
@@ -43,52 +47,74 @@ export default function ProductCard({ product, profile, onClose, onTryOn }: Prop
 
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
-            <View style={[styles.colorPreview, { backgroundColor: product.colorHex }]} />
+            <View style={[styles.colorPreview, { backgroundColor: product.colorHex }]}>
+              <View style={styles.colorPreviewInner} />
+            </View>
             <View style={styles.headerInfo}>
+              <Text style={styles.brandLabel}>{product.brand.name}</Text>
               <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.brandName}>{product.brand.name}</Text>
-              <Text style={styles.colorName}>{product.colorName}</Text>
+              <Text style={styles.shadeName}>{product.colorName}</Text>
               <Text style={styles.price}>${product.price}</Text>
             </View>
           </View>
 
-          <View style={styles.compatibilityRow}>
-            <View style={[styles.compatBadge, compatible ? styles.compatGood : styles.compatNeutral]}>
-              <Text style={styles.compatText}>
-                {compatible ? '✓ Matches your skin tone' : 'May vary on your skin tone'}
-              </Text>
+          {compatible && (
+            <View style={styles.compatRow}>
+              <View style={styles.compatBadge}>
+                <View style={styles.compatDot} />
+                <Text style={styles.compatText}>Matches your skin tone</Text>
+              </View>
             </View>
-          </View>
+          )}
 
           <View style={styles.divider} />
 
-          <View style={styles.detailsSection}>
+          <View style={styles.section}>
             <Text style={styles.sectionTitle}>About this shade</Text>
-            <Text style={styles.detailText}>
-              {product.colorName} is a {product.category} product by {product.brand.name}.
-              Priced at ${product.price}, it works best on {product.compatibleSkinTones.join(', ')} skin tones.
+            <Text style={styles.sectionBody}>
+              {product.name} by {product.brand.name} is a {product.category} shade in {product.colorName.toLowerCase()}.
+              Best suited for {product.compatibleSkinTones.join(', ')} skin tones.
             </Text>
           </View>
 
           <View style={styles.divider} />
 
-          <View style={styles.reviewsSection}>
-            <Text style={styles.sectionTitle}>Reviews</Text>
-            <Text style={styles.emptyReviews}>No reviews yet. Be the first to try it on and share your thoughts.</Text>
+          <View style={styles.section}>
+            <View style={styles.reviewsHeader}>
+              <Text style={styles.sectionTitle}>Reviews</Text>
+              <TouchableOpacity onPress={() => setShowReviews(true)}>
+                <Text style={styles.seeAllText}>See all</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              style={styles.writeReviewBtn}
+              onPress={() => setShowReviews(true)}
+            >
+              <Text style={styles.writeReviewText}>Write a review</Text>
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.spacer} />
+          <View style={{ height: 24 }} />
         </ScrollView>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.tryOnButton} onPress={handleTryOn}>
+          <TouchableOpacity style={styles.tryOnBtn} onPress={handleTryOn}>
             <Text style={styles.tryOnText}>Try On</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.buyButton} onPress={handleBuy}>
+          <TouchableOpacity style={styles.buyBtn} onPress={handleBuy}>
+            <View style={styles.buyDot} />
             <Text style={styles.buyText}>Buy — ${product.price}</Text>
           </TouchableOpacity>
         </View>
       </View>
+
+      {showReviews && (
+        <ReviewSheet
+          productId={product.id}
+          profile={profile}
+          onClose={() => setShowReviews(false)}
+        />
+      )}
     </Modal>
   );
 }
@@ -96,20 +122,23 @@ export default function ProductCard({ product, profile, onClose, onTryOn }: Prop
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   card: {
-    backgroundColor: '#111',
+    backgroundColor: 'rgba(18,18,18,0.97)',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    maxHeight: '75%',
-    paddingBottom: 32,
+    maxHeight: '78%',
+    borderTopWidth: 0.5,
+    borderLeftWidth: 0.5,
+    borderRightWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   handle: {
-    width: 40,
+    width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#333',
+    backgroundColor: 'rgba(255,255,255,0.15)',
     alignSelf: 'center',
     marginTop: 12,
     marginBottom: 20,
@@ -121,118 +150,165 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   colorPreview: {
-    width: 80,
-    height: 80,
+    width: 88,
+    height: 88,
     borderRadius: 16,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
+    padding: 6,
+  },
+  colorPreviewInner: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.25)',
   },
   headerInfo: {
     flex: 1,
     justifyContent: 'center',
-    gap: 4,
+    gap: 3,
+  },
+  brandLabel: {
+    color: theme.gray1,
+    fontSize: 12,
+    fontFamily: theme.fonts.body,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   productName: {
-    color: '#fff',
+    color: theme.white,
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: theme.fonts.heading,
   },
-  brandName: {
-    color: '#888',
-    fontSize: 14,
-  },
-  colorName: {
-    color: '#666',
+  shadeName: {
+    color: theme.gray2,
     fontSize: 13,
+    fontFamily: theme.fonts.body,
   },
   price: {
-    color: '#E8453C',
-    fontSize: 18,
-    fontWeight: '700',
+    color: theme.gold,
+    fontSize: 20,
+    fontFamily: theme.fonts.heading,
     marginTop: 4,
   },
-  compatibilityRow: {
+  compatRow: {
     paddingHorizontal: 24,
     marginBottom: 16,
   },
   compatBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(61,181,106,0.1)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(61,181,106,0.3)',
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 7,
     borderRadius: 20,
     alignSelf: 'flex-start',
   },
-  compatGood: {
-    backgroundColor: '#0F2E1A',
-  },
-  compatNeutral: {
-    backgroundColor: '#1A1A1A',
+  compatDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: theme.green,
   },
   compatText: {
-    color: '#4CAF50',
+    color: theme.green,
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: theme.fonts.body,
   },
   divider: {
-    height: 1,
-    backgroundColor: '#1E1E1E',
+    height: 0.5,
+    backgroundColor: 'rgba(255,255,255,0.07)',
     marginHorizontal: 24,
     marginVertical: 16,
   },
-  detailsSection: {
+  section: {
     paddingHorizontal: 24,
   },
   sectionTitle: {
-    color: '#fff',
+    color: theme.white,
     fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
+    fontFamily: theme.fonts.heading,
+    marginBottom: 10,
   },
-  detailText: {
-    color: '#888',
+  sectionBody: {
+    color: theme.gray1,
     fontSize: 14,
+    fontFamily: theme.fonts.body,
     lineHeight: 22,
   },
-  reviewsSection: {
-    paddingHorizontal: 24,
+  reviewsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
   },
-  emptyReviews: {
-    color: '#555',
+  seeAllText: {
+    color: theme.gold,
+    fontSize: 13,
+    fontFamily: theme.fonts.body,
+  },
+  writeReviewBtn: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  writeReviewText: {
+    color: theme.gray1,
     fontSize: 14,
-    lineHeight: 22,
-  },
-  spacer: {
-    height: 24,
+    fontFamily: theme.fonts.body,
   },
   actions: {
     flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#1E1E1E',
-  },
-  tryOnButton: {
-    flex: 1,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
+    gap: 10,
+    paddingHorizontal: 20,
     paddingVertical: 16,
+    borderTopWidth: 0.5,
+    borderTopColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  tryOnBtn: {
+    flex: 1,
+    borderRadius: 14,
+    paddingVertical: 14,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E8453C',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,168,76,0.6)',
+    backgroundColor: 'rgba(201,168,76,0.07)',
   },
   tryOnText: {
-    color: '#E8453C',
-    fontSize: 16,
-    fontWeight: '700',
+    color: theme.gold,
+    fontSize: 15,
+    fontFamily: theme.fonts.bodySemiBold,
   },
-  buyButton: {
+  buyBtn: {
     flex: 2,
-    backgroundColor: '#E8453C',
-    borderRadius: 16,
-    paddingVertical: 16,
+    backgroundColor: 'rgba(61,181,106,0.1)',
+    borderRadius: 14,
+    paddingVertical: 14,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 0.5,
+    borderColor: 'rgba(61,181,106,0.4)',
+  },
+  buyDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: theme.green,
   },
   buyText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
+    color: theme.green,
+    fontSize: 15,
+    fontFamily: theme.fonts.bodySemiBold,
   },
 });

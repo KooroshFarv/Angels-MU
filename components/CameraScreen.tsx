@@ -2,9 +2,9 @@ import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { UserProfile } from '../types/UserProfile';
-import ProductShelf from './ProductShelf';
 import { Product } from '../types/Product';
 import ProductCard from './ProductCards';
+import SimilarShades from './SimilarShades';
 
 interface Props {
   profile: UserProfile;
@@ -18,9 +18,7 @@ export default function CameraScreen({ profile, tryOnProduct, onExit }: Props) {
   const [cardProduct, setCardProduct] = useState<Product | null>(null);
   const [activeTryOn, setActiveTryOn] = useState<Product>(tryOnProduct);
 
-  if (!permission) {
-    return <View />;
-  }
+  if (!permission) return <View />;
 
   if (!permission.granted) {
     return (
@@ -39,7 +37,6 @@ export default function CameraScreen({ profile, tryOnProduct, onExit }: Props) {
         <TouchableOpacity style={styles.exitButton} onPress={onExit}>
           <Text style={styles.exitText}>✕</Text>
         </TouchableOpacity>
-
         <View style={styles.controls}>
           <TouchableOpacity
             style={styles.flipButton}
@@ -48,19 +45,12 @@ export default function CameraScreen({ profile, tryOnProduct, onExit }: Props) {
             <Text style={styles.buttonText}>Flip</Text>
           </TouchableOpacity>
         </View>
-
-        <ProductShelf
-          profile={profile}
-          selectedProduct={activeTryOn}
-          onSelectProduct={(p) => {
-            if (p) {
-              setActiveTryOn(p);
-            } else {
-              setCardProduct(null);
-            }
-          }}
-        />
       </CameraView>
+
+      <SimilarShades
+        currentProduct={activeTryOn}
+        onSelect={(p) => setActiveTryOn(p)}
+      />
 
       {cardProduct && (
         <ProductCard
@@ -102,7 +92,7 @@ const styles = StyleSheet.create({
   },
   controls: {
     position: 'absolute',
-    bottom: 220,
+    bottom: 200,
     width: '100%',
     alignItems: 'center',
   },
