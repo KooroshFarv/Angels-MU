@@ -93,7 +93,7 @@ export default function BrowseScreen({ profile, onTryOn, onUpdate }: Props) {
             opacity: logoOpacity,
           },
         ]}>
-          <Text style={styles.logo}>mirrors</Text>
+          <Text style={styles.logo}>Angels</Text>
           <Text style={styles.subtitle}>Find your shade</Text>
         </Animated.View>
 

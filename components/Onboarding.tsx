@@ -82,7 +82,7 @@ export default function Onboarding({ onComplete }: Props) {
     <View style={styles.container}>
 
       <View style={styles.topSection}>
-        <Text style={styles.logo}>mirrors</Text>
+        <Text style={styles.logo}>Try On Angel</Text>
         <Text style={styles.logoSub}>your beauty, your shade</Text>
       </View>
 
