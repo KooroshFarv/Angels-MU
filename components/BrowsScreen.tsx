@@ -1,12 +1,15 @@
 import {
+  Animated,
   Image,
+  Keyboard,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { PRODUCTS, BRANDS } from '../constants/mockData';
 import { Product } from '../types/Product';
 import { UserProfile } from '../types/UserProfile';
@@ -25,13 +28,55 @@ export default function BrowseScreen({ profile, onTryOn, onUpdate }: Props) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [activeBrand, setActiveBrand] = useState('all');
   const [showProfile, setShowProfile] = useState(false);
+  const [search, setSearch] = useState('');
+  const [searchActive, setSearchActive] = useState(false);
+
+  const logoAnim = useRef(new Animated.Value(0)).current;
+
+  const openSearch = () => {
+    setSearchActive(true);
+    Animated.timing(logoAnim, {
+      toValue: 1,
+      duration: 280,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeSearch = () => {
+    Keyboard.dismiss();
+    setSearch('');
+    Animated.timing(logoAnim, {
+      toValue: 0,
+      duration: 280,
+      useNativeDriver: true,
+    }).start(() => setSearchActive(false));
+  };
+
+  const logoTranslate = logoAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -300],
+  });
+
+  const logoOpacity = logoAnim.interpolate({
+    inputRange: [0, 0.5],
+    outputRange: [1, 0],
+  });
+
+  const searchOpacity = logoAnim.interpolate({
+    inputRange: [0.3, 1],
+    outputRange: [0, 1],
+  });
 
   const categories = ['all', 'lips', 'eyes', 'face'];
 
   const filtered = PRODUCTS.filter(p => {
     const catMatch = activeCategory === 'all' || p.category === activeCategory;
     const brandMatch = activeBrand === 'all' || p.brand.id === activeBrand;
-    return catMatch && brandMatch;
+    const searchMatch = search.trim() === '' ||
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.brand.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.colorName.toLowerCase().includes(search.toLowerCase());
+    return catMatch && brandMatch && searchMatch;
   });
 
   const isCompatible = (p: Product) =>
@@ -40,16 +85,52 @@ export default function BrowseScreen({ profile, onTryOn, onUpdate }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View>
+
+        <Animated.View style={[
+          styles.logoContainer,
+          {
+            transform: [{ translateX: logoTranslate }],
+            opacity: logoOpacity,
+          },
+        ]}>
           <Text style={styles.logo}>mirrors</Text>
           <Text style={styles.subtitle}>Find your shade</Text>
+        </Animated.View>
+
+        {searchActive && (
+          <Animated.View style={[styles.searchBarContainer, { opacity: searchOpacity }]}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search products, brands, shades..."
+              placeholderTextColor={theme.gray2}
+              value={search}
+              onChangeText={setSearch}
+              returnKeyType="search"
+              autoFocus
+              clearButtonMode="while-editing"
+            />
+          </Animated.View>
+        )}
+
+        <View style={styles.headerRight}>
+          {searchActive ? (
+            <TouchableOpacity style={styles.cancelBtn} onPress={closeSearch}>
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          ) : (
+            <>
+              <TouchableOpacity style={styles.iconBtn} onPress={openSearch}>
+                <Text style={styles.iconBtnText}>⌕</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.profileBtn}
+                onPress={() => setShowProfile(true)}
+              >
+                <Text style={styles.profileBtnText}>Profile</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
-        <TouchableOpacity
-          style={styles.profileBtn}
-          onPress={() => setShowProfile(true)}
-        >
-          <Text style={styles.profileBtnText}>Profile</Text>
-        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -205,6 +286,10 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     borderBottomWidth: 0.5,
     borderBottomColor: 'rgba(255,255,255,0.05)',
+    overflow: 'hidden',
+  },
+  logoContainer: {
+    flex: 1,
   },
   logo: {
     color: theme.gold,
@@ -216,6 +301,49 @@ const styles = StyleSheet.create({
     color: theme.gray2,
     fontSize: 13,
     marginTop: 2,
+    fontFamily: theme.fonts.body,
+  },
+  searchBarContainer: {
+    flex: 1,
+    marginRight: 10,
+  },
+  searchInput: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 12,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    color: theme.white,
+    fontSize: 14,
+    fontFamily: theme.fonts.body,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  iconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconBtnText: {
+    color: theme.gold,
+    fontSize: 20,
+  },
+  cancelBtn: {
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+  },
+  cancelText: {
+    color: theme.gold,
+    fontSize: 14,
     fontFamily: theme.fonts.body,
   },
   profileBtn: {
