@@ -2,21 +2,21 @@ import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { UserProfile } from '../types/UserProfile';
-import { Product } from '../types/Product';
+import { ApiProduct } from '../services/api';
 import ProductCard from './ProductCards';
 import SimilarShades from './SimilarShades';
 
 interface Props {
   profile: UserProfile;
-  tryOnProduct: Product;
+  tryOnProduct: ApiProduct;
   onExit: () => void;
 }
 
 export default function CameraScreen({ profile, tryOnProduct, onExit }: Props) {
   const [facing, setFacing] = useState<CameraType>('front');
   const [permission, requestPermission] = useCameraPermissions();
-  const [cardProduct, setCardProduct] = useState<Product | null>(null);
-  const [activeTryOn, setActiveTryOn] = useState<Product>(tryOnProduct);
+  const [cardProduct, setCardProduct] = useState<ApiProduct | null>(null);
+  const [activeTryOn, setActiveTryOn] = useState<ApiProduct>(tryOnProduct);
 
   if (!permission) return <View />;
 

@@ -9,90 +9,87 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useState, useRef } from 'react';
-import { PRODUCTS, BRANDS } from '../constants/mockData';
-import { Product } from '../types/Product';
+import { useState, useRef, useEffect } from 'react';
 import { UserProfile } from '../types/UserProfile';
 import ProductCard from './ProductCards';
 import { theme } from '../constants/theme';
 import ProfileScreen from './ProfileScreen';
+import { fetchBrands, fetchProducts, ApiBrand, ApiProduct } from '../services/api';
 
 interface Props {
   profile: UserProfile;
-  onTryOn: (product: Product) => void;
+  onTryOn: (product: ApiProduct) => void;
   onUpdate: (profile: UserProfile) => void;
 }
 
 export default function BrowseScreen({ profile, onTryOn, onUpdate }: Props) {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ApiProduct | null>(null);
   const [activeCategory, setActiveCategory] = useState('all');
   const [activeBrand, setActiveBrand] = useState('all');
   const [showProfile, setShowProfile] = useState(false);
   const [search, setSearch] = useState('');
   const [searchActive, setSearchActive] = useState(false);
 
+  const [products, setProducts] = useState<ApiProduct[]>([]);
+  const [brands, setBrands] = useState<ApiBrand[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
   const logoAnim = useRef(new Animated.Value(0)).current;
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(false);
+      const [prods, brnds] = await Promise.all([
+        fetchProducts({ category: activeCategory, brandId: activeBrand }),
+        fetchBrands(),
+      ]);
+      setProducts(prods);
+      setBrands(brnds);
+    } catch (e) {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [activeCategory, activeBrand]);
 
   const openSearch = () => {
     setSearchActive(true);
-    Animated.timing(logoAnim, {
-      toValue: 1,
-      duration: 280,
-      useNativeDriver: true,
-    }).start();
+    Animated.timing(logoAnim, { toValue: 1, duration: 280, useNativeDriver: true }).start();
   };
 
   const closeSearch = () => {
     Keyboard.dismiss();
     setSearch('');
-    Animated.timing(logoAnim, {
-      toValue: 0,
-      duration: 280,
-      useNativeDriver: true,
-    }).start(() => setSearchActive(false));
+    Animated.timing(logoAnim, { toValue: 0, duration: 280, useNativeDriver: true }).start(() => setSearchActive(false));
   };
 
-  const logoTranslate = logoAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, -300],
-  });
-
-  const logoOpacity = logoAnim.interpolate({
-    inputRange: [0, 0.5],
-    outputRange: [1, 0],
-  });
-
-  const searchOpacity = logoAnim.interpolate({
-    inputRange: [0.3, 1],
-    outputRange: [0, 1],
-  });
+  const logoTranslate = logoAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -300] });
+  const logoOpacity = logoAnim.interpolate({ inputRange: [0, 0.5], outputRange: [1, 0] });
+  const searchOpacity = logoAnim.interpolate({ inputRange: [0.3, 1], outputRange: [0, 1] });
 
   const categories = ['all', 'lips', 'eyes', 'face'];
 
-  const filtered = PRODUCTS.filter(p => {
-    const catMatch = activeCategory === 'all' || p.category === activeCategory;
-    const brandMatch = activeBrand === 'all' || p.brand.id === activeBrand;
+  const filtered = products.filter(p => {
     const searchMatch = search.trim() === '' ||
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.brand.name.toLowerCase().includes(search.toLowerCase()) ||
       p.colorName.toLowerCase().includes(search.toLowerCase());
-    return catMatch && brandMatch && searchMatch;
+    return searchMatch;
   });
 
-  const isCompatible = (p: Product) =>
+  const isCompatible = (p: ApiProduct) =>
     p.compatibleSkinTones.includes(profile.skinTone);
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-
-        <Animated.View style={[
-          styles.logoContainer,
-          {
-            transform: [{ translateX: logoTranslate }],
-            opacity: logoOpacity,
-          },
-        ]}>
+        <Animated.View style={[styles.logoContainer, { transform: [{ translateX: logoTranslate }], opacity: logoOpacity }]}>
           <Text style={styles.logo}>Angels</Text>
           <Text style={styles.subtitle}>Find your shade</Text>
         </Animated.View>
@@ -122,10 +119,7 @@ export default function BrowseScreen({ profile, onTryOn, onUpdate }: Props) {
               <TouchableOpacity style={styles.iconBtn} onPress={openSearch}>
                 <Text style={styles.iconBtnText}>⌕</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.profileBtn}
-                onPress={() => setShowProfile(true)}
-              >
+              <TouchableOpacity style={styles.profileBtn} onPress={() => setShowProfile(true)}>
                 <Text style={styles.profileBtnText}>Profile</Text>
               </TouchableOpacity>
             </>
@@ -162,7 +156,7 @@ export default function BrowseScreen({ profile, onTryOn, onUpdate }: Props) {
           </Text>
         </TouchableOpacity>
 
-        {BRANDS.map(brand => (
+        {brands.map(brand => (
           <TouchableOpacity
             key={brand.id}
             style={[styles.filterPill, activeBrand === brand.id && styles.filterPillActive]}
@@ -180,11 +174,19 @@ export default function BrowseScreen({ profile, onTryOn, onUpdate }: Props) {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       >
-        {filtered.length === 0 && (
+        {loading && (
+          <Text style={styles.emptyText}>Loading products...</Text>
+        )}
+
+        {error && !loading && (
+          <Text style={styles.emptyText}>Couldn't reach the server. Check your connection.</Text>
+        )}
+
+        {!loading && !error && filtered.length === 0 && (
           <Text style={styles.emptyText}>No products found.</Text>
         )}
 
-        {filtered.map(product => {
+        {!loading && !error && filtered.map(product => {
           const compatible = isCompatible(product);
           return (
             <TouchableOpacity
@@ -225,16 +227,10 @@ export default function BrowseScreen({ profile, onTryOn, onUpdate }: Props) {
               </View>
 
               <View style={styles.cardActions}>
-                <TouchableOpacity
-                  style={styles.tryOnBtn}
-                  onPress={() => onTryOn(product)}
-                >
+                <TouchableOpacity style={styles.tryOnBtn} onPress={() => onTryOn(product)}>
                   <Text style={styles.tryOnText}>Try On</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.buyBtn}
-                  onPress={() => setSelectedProduct(product)}
-                >
+                <TouchableOpacity style={styles.buyBtn} onPress={() => setSelectedProduct(product)}>
                   <View style={styles.buyDot} />
                   <Text style={styles.buyText}>View & Buy</Text>
                 </TouchableOpacity>
@@ -273,277 +269,85 @@ export default function BrowseScreen({ profile, onTryOn, onUpdate }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#050505',
-  },
+  container: { flex: 1, backgroundColor: '#050505' },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
-    overflow: 'hidden',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingTop: 60, paddingHorizontal: 20, paddingBottom: 16,
+    borderBottomWidth: 0.5, borderBottomColor: 'rgba(255,255,255,0.05)', overflow: 'hidden',
   },
-  logoContainer: {
-    flex: 1,
-  },
-  logo: {
-    color: theme.gold,
-    fontSize: 34,
-    letterSpacing: -1,
-    fontFamily: theme.fonts.heading,
-  },
-  subtitle: {
-    color: theme.gray2,
-    fontSize: 13,
-    marginTop: 2,
-    fontFamily: theme.fonts.body,
-  },
-  searchBarContainer: {
-    flex: 1,
-    marginRight: 10,
-  },
+  logoContainer: { flex: 1 },
+  logo: { color: theme.gold, fontSize: 34, letterSpacing: -1, fontFamily: theme.fonts.heading },
+  subtitle: { color: theme.gray2, fontSize: 13, marginTop: 2, fontFamily: theme.fonts.body },
+  searchBarContainer: { flex: 1, marginRight: 10 },
   searchInput: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 12,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    color: theme.white,
-    fontSize: 14,
-    fontFamily: theme.fonts.body,
+    backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 12, borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 14, paddingVertical: 10,
+    color: theme.white, fontSize: 14, fontFamily: theme.fonts.body,
   },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center',
   },
-  iconBtnText: {
-    color: theme.gold,
-    fontSize: 20,
-  },
-  cancelBtn: {
-    paddingHorizontal: 4,
-    paddingVertical: 8,
-  },
-  cancelText: {
-    color: theme.gold,
-    fontSize: 14,
-    fontFamily: theme.fonts.body,
-  },
+  iconBtnText: { color: theme.gold, fontSize: 20 },
+  cancelBtn: { paddingHorizontal: 4, paddingVertical: 8 },
+  cancelText: { color: theme.gold, fontSize: 14, fontFamily: theme.fonts.body },
   profileBtn: {
-    backgroundColor: 'rgba(201,168,76,0.1)',
-    borderWidth: 0.5,
-    borderColor: 'rgba(201,168,76,0.3)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    backgroundColor: 'rgba(201,168,76,0.1)', borderWidth: 0.5, borderColor: 'rgba(201,168,76,0.3)',
+    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
   },
-  profileBtnText: {
-    color: theme.gold,
-    fontSize: 13,
-    fontFamily: theme.fonts.bodySemiBold,
-  },
-  filterScroll: {
-    maxHeight: 44,
-    marginBottom: 12,
-  },
-  filterContent: {
-    paddingHorizontal: 20,
-    gap: 8,
-    alignItems: 'center',
-  },
+  profileBtnText: { color: theme.gold, fontSize: 13, fontFamily: theme.fonts.bodySemiBold },
+  filterScroll: { maxHeight: 44, marginBottom: 12 },
+  filterContent: { paddingHorizontal: 20, gap: 8, alignItems: 'center' },
   filterPill: {
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: 20,
-    backgroundColor: theme.gray4,
-    borderWidth: 1,
-    borderColor: theme.gray3,
+    paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20,
+    backgroundColor: theme.gray4, borderWidth: 1, borderColor: theme.gray3,
   },
-  filterPillActive: {
-    backgroundColor: theme.goldDim,
-    borderColor: theme.gold,
-  },
-  filterText: {
-    color: theme.gray1,
-    fontSize: 13,
-    fontFamily: theme.fonts.body,
-  },
-  filterTextActive: {
-    color: theme.gold,
-  },
-  filterDivider: {
-    width: 1,
-    height: 20,
-    backgroundColor: theme.gray3,
-    marginHorizontal: 4,
-  },
-  list: {
-    flex: 1,
-  },
-  listContent: {
-    paddingHorizontal: 16,
-    gap: 12,
-    paddingTop: 12,
-  },
+  filterPillActive: { backgroundColor: theme.goldDim, borderColor: theme.gold },
+  filterText: { color: theme.gray1, fontSize: 13, fontFamily: theme.fonts.body },
+  filterTextActive: { color: theme.gold },
+  filterDivider: { width: 1, height: 20, backgroundColor: theme.gray3, marginHorizontal: 4 },
+  list: { flex: 1 },
+  listContent: { paddingHorizontal: 16, gap: 12, paddingTop: 12 },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 20,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.12)',
-    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 20, borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.12)', overflow: 'hidden',
   },
-  cardGold: {
-    borderColor: 'rgba(201,168,76,0.45)',
-    borderWidth: 0.5,
-  },
-  cardInner: {
-    flexDirection: 'row',
-    padding: 14,
-    gap: 14,
-    backgroundColor: 'rgba(255,255,255,0.02)',
-  },
-  imageBox: {
-    width: 90,
-    height: 90,
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  productImage: {
-    width: 90,
-    height: 90,
-  },
+  cardGold: { borderColor: 'rgba(201,168,76,0.45)', borderWidth: 0.5 },
+  cardInner: { flexDirection: 'row', padding: 14, gap: 14, backgroundColor: 'rgba(255,255,255,0.02)' },
+  imageBox: { width: 90, height: 90, borderRadius: 14, overflow: 'hidden' },
+  productImage: { width: 90, height: 90 },
   colorFallback: {
-    width: 90,
-    height: 90,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingBottom: 8,
-    borderRadius: 14,
+    width: 90, height: 90, alignItems: 'center', justifyContent: 'flex-end',
+    paddingBottom: 8, borderRadius: 14,
   },
-  fallbackLabel: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 10,
-    textAlign: 'center',
-    paddingHorizontal: 4,
-  },
+  fallbackLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 10, textAlign: 'center', paddingHorizontal: 4 },
   toneBadge: {
-    position: 'absolute',
-    bottom: 6,
-    left: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 10,
+    position: 'absolute', bottom: 6, left: 6, flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 7, paddingVertical: 3, borderRadius: 10,
   },
-  toneDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: theme.green,
-  },
-  toneText: {
-    color: theme.green,
-    fontSize: 10,
-    fontFamily: theme.fonts.bodySemiBold,
-  },
-  info: {
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  productName: {
-    color: theme.white,
-    fontSize: 17,
-    marginBottom: 3,
-    fontFamily: theme.fonts.heading,
-  },
-  brandName: {
-    color: theme.gray1,
-    fontSize: 13,
-    fontFamily: theme.fonts.body,
-  },
-  shadeName: {
-    color: theme.gray2,
-    fontSize: 12,
-    marginTop: 2,
-    fontFamily: theme.fonts.body,
-  },
-  price: {
-    color: theme.gold,
-    fontSize: 20,
-    fontFamily: theme.fonts.heading,
-  },
+  toneDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: theme.green },
+  toneText: { color: theme.green, fontSize: 10, fontFamily: theme.fonts.bodySemiBold },
+  info: { flex: 1, justifyContent: 'space-between' },
+  productName: { color: theme.white, fontSize: 17, marginBottom: 3, fontFamily: theme.fonts.heading },
+  brandName: { color: theme.gray1, fontSize: 13, fontFamily: theme.fonts.body },
+  shadeName: { color: theme.gray2, fontSize: 12, marginTop: 2, fontFamily: theme.fonts.body },
+  price: { color: theme.gold, fontSize: 20, fontFamily: theme.fonts.heading },
   cardActions: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingBottom: 14,
-    paddingTop: 10,
-    borderTopWidth: 0.5,
-    borderTopColor: 'rgba(255,255,255,0.06)',
-    backgroundColor: 'rgba(0,0,0,0.15)',
+    flexDirection: 'row', gap: 8, paddingHorizontal: 14, paddingBottom: 14, paddingTop: 10,
+    borderTopWidth: 0.5, borderTopColor: 'rgba(255,255,255,0.06)', backgroundColor: 'rgba(0,0,0,0.15)',
   },
   tryOnBtn: {
-    flex: 1,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderWidth: 0.5,
-    borderColor: 'rgba(201,168,76,0.6)',
-    backgroundColor: 'rgba(201,168,76,0.07)',
+    flex: 1, borderRadius: 12, paddingVertical: 12, alignItems: 'center',
+    borderWidth: 0.5, borderColor: 'rgba(201,168,76,0.6)', backgroundColor: 'rgba(201,168,76,0.07)',
   },
-  tryOnText: {
-    color: theme.gold,
-    fontSize: 14,
-    fontFamily: theme.fonts.bodySemiBold,
-  },
+  tryOnText: { color: theme.gold, fontSize: 14, fontFamily: theme.fonts.bodySemiBold },
   buyBtn: {
-    flex: 2,
-    backgroundColor: 'rgba(61,181,106,0.1)',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 6,
-    borderWidth: 0.5,
-    borderColor: 'rgba(61,181,106,0.4)',
+    flex: 2, backgroundColor: 'rgba(61,181,106,0.1)', borderRadius: 12, paddingVertical: 12,
+    alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6,
+    borderWidth: 0.5, borderColor: 'rgba(61,181,106,0.4)',
   },
-  buyDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: theme.green,
-  },
-  buyText: {
-    color: theme.green,
-    fontSize: 14,
-    fontFamily: theme.fonts.bodySemiBold,
-  },
-  emptyText: {
-    color: theme.gray2,
-    fontSize: 15,
-    textAlign: 'center',
-    marginTop: 40,
-    fontFamily: theme.fonts.body,
-  },
+  buyDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.green },
+  buyText: { color: theme.green, fontSize: 14, fontFamily: theme.fonts.bodySemiBold },
+  emptyText: { color: theme.gray2, fontSize: 15, textAlign: 'center', marginTop: 40, fontFamily: theme.fonts.body },
 });

@@ -8,16 +8,16 @@ import {
   View,
 } from 'react-native';
 import { useState } from 'react';
-import { Product } from '../types/Product';
 import { UserProfile } from '../types/UserProfile';
 import { theme } from '../constants/theme';
 import ReviewSheet from './ReviewSheet';
+import { ApiProduct } from '../services/api';
 
 interface Props {
-  product: Product;
+  product: ApiProduct;
   profile: UserProfile;
   onClose: () => void;
-  onTryOn: (product: Product) => void;
+  onTryOn: (product: ApiProduct) => void;
 }
 
 export default function ProductCard({ product, profile, onClose, onTryOn }: Props) {

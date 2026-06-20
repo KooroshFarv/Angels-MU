@@ -8,12 +8,12 @@ import Onboarding from './components/Onboarding';
 import BrowseScreen from './components/BrowsScreen';
 import CameraScreen from './components/CameraScreen';
 import { UserProfile } from './types/UserProfile';
-import { Product } from './types/Product';
+import { ApiProduct } from './services/api';
 
 export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tryOnProduct, setTryOnProduct] = useState<Product | null>(null);
+  const [tryOnProduct, setTryOnProduct] = useState<ApiProduct | null>(null);
 
   const [fontsLoaded] = useFonts({
     PlayfairDisplay_400Regular,

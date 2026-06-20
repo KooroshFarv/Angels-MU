@@ -5,21 +5,29 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { PRODUCTS } from '../constants/mockData';
-import { Product } from '../types/Product';
+import { useState, useEffect } from 'react';
 import { theme } from '../constants/theme';
+import { fetchProducts, ApiProduct } from '../services/api';
 
 interface Props {
-  currentProduct: Product;
-  onSelect: (product: Product) => void;
+  currentProduct: ApiProduct;
+  onSelect: (product: ApiProduct) => void;
 }
 
 export default function SimilarShades({ currentProduct, onSelect }: Props) {
-  const similar = PRODUCTS.filter(p =>
-    p.id !== currentProduct.id &&
-    p.category === currentProduct.category &&
-    p.brand.id !== currentProduct.brand.id
-  );
+  const [similar, setSimilar] = useState<ApiProduct[]>([]);
+
+  useEffect(() => {
+    fetchProducts({ category: currentProduct.category })
+      .then(products => {
+        const filtered = products.filter(p =>
+          p.id !== currentProduct.id &&
+          p.brand.id !== currentProduct.brand.id
+        );
+        setSimilar(filtered);
+      })
+      .catch(() => setSimilar([]));
+  }, [currentProduct.id]);
 
   if (similar.length === 0) return null;
 
